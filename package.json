@@ -1,0 +1,20 @@
+{
+  "name": "virtual-keyboard",
+  "version": "1.0.0",
+  "description": "Виртуальная клавиатура",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "style": "sass --watch sass/style.scss style.css"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OlegD89/virtual-keyboard.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/OlegD89/virtual-keyboard/issues"
+  },
+  "homepage": "https://github.com/OlegD89/virtual-keyboard#readme"
+}

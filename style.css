@@ -1,0 +1,17 @@
+html {
+  font-size: 10px;
+  font-family: "Lato", "Open Sans", Verdana, Arial, sans-serif;
+}
+
+body {
+  font-size: 1.6rem;
+  font-family: "Lato", "Open Sans", Verdana, Arial, sans-serif;
+  margin: 0;
+}
+
+.wrapper {
+  max-width: 1020px;
+  margin: auto;
+}
+
+/*# sourceMappingURL=style.css.map */
