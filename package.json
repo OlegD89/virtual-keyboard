@@ -5,7 +5,9 @@
   "main": "script.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "style": "sass --watch sass/style.scss style.css"
+    "style": "sass --watch sass/style.scss style.css",
+    "dev": "webpack --mode development",
+    "prod": "webpack --mode production"
   },
   "repository": {
     "type": "git",
@@ -16,5 +18,9 @@
   "bugs": {
     "url": "https://github.com/OlegD89/virtual-keyboard/issues"
   },
-  "homepage": "https://github.com/OlegD89/virtual-keyboard#readme"
+  "homepage": "https://github.com/OlegD89/virtual-keyboard#readme",
+  "devDependencies": {
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11"
+  }
 }
