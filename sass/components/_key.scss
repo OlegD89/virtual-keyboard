@@ -1,0 +1,54 @@
+.key {
+    width: 40px;
+    height: 40px;
+    background-color: #0000ff;
+    margin-left: 6px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    cursor: pointer;
+    &.key.key_press {
+        background-color: #005800;
+    }
+    &:hover {
+        background-color: #0000c2;
+    }
+}
+
+
+
+.key__text {
+    user-select: none;
+}
+
+.key.special {
+    background-color: #5100bb;
+    &.key_press {
+        background-color: #005800;
+    }
+    &:hover {
+        background-color: #390085;
+    }
+}
+
+.key.backspace, .key.capslock, .key.shift-left {
+    width: 100px;
+}
+
+.key.tab {
+    width: 50px;
+}
+
+.key.del {
+    width: 44px;
+}
+
+.key.enter, .key.shift-right {
+    width: 86px;
+}
+
+.key.space {
+    width: 330px;
+}
