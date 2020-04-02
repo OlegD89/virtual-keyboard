@@ -1,11 +1,25 @@
 import { Layout } from './Layout'
 import { Settings } from './Settings'
 
+// TODO Реализовать:
+// Сохранение языка, (сочетание клавиш для переключения языка должно быть указано на странице с клавиатурой)
+// Анимация нажатия на кнопку
+// Перемещение курсора и вставка имволов на место курсора
+// Подключение eslint
+
 export class Keyboard {
     constructor() {
         this._layout = new Layout();
         this._settings = new Settings();
         this._keys = {};
+        this._keyStickingForMouse = {
+            isCapsLock: undefined,
+            shiftMouse: undefined,
+            controlMouse: undefined,
+            altMouse: undefined,
+            specialKeys: []
+        }
+        this._isCapsLockMouse = false;
     }
 
     //#region public methods
@@ -16,18 +30,23 @@ export class Keyboard {
         this._layout.create();
     }
 
-    show() {
-        this._layout.show(this._settings.language);
-    }
-
     run() {
         const that = this;
         document.addEventListener('keydown', function(event) {
                 that._keyDownEvent(event.code, event);
+                event.preventDefault();
             });
         document.addEventListener('keyup', function(event) {
-                that._keyUpEvent(event.code);
+                that._keyUpEvent(event.code, event);
           });
+        document.querySelector('.keyboard').addEventListener('click', function(e) {
+            let elementKey = e.target.classList.contains('key') ? e.target : 
+                e.target.classList.contains('key__text') ? e.target.parentElement : null; 
+            if(!elementKey) return
+
+            let keyCode = that._layout.getKeyCodeByElement(elementKey);
+            that._keyMouseClickEvent(keyCode);            
+        })
     }
     //#endregion public methods
 
@@ -42,14 +61,98 @@ export class Keyboard {
         this._layout.print(eventCode);
     }
 
-    _keyUpEvent(eventCode) {
+    _keyUpEvent(eventCode, event) {
         if(this._keys[eventCode]){
             this._keys[eventCode] = undefined;
             const isCapsLock = event.getModifierState("CapsLock");
             if(eventCode !== 'CapsLock' || !isCapsLock)
                 this._layout.pressKey(eventCode, false);
             this._setSettings(event.shiftKey, isCapsLock);
+
+            if(this._checkChangeLanguage(eventCode)){
+                let language = this._settings.changeAndGetLanguage();
+                this._layout.changeLanguage(language, event.shiftKey, isCapsLock);
+            }
         }
+    }
+
+    _keyMouseClickEvent(eventCode) {
+        //if(this._keys[eventCode]) return
+        if(eventCode == 'CapsLock') this._isCapsLockMouse = !this._isCapsLockMouse;
+        let isCapsLock = this._isCapsLockMouse;
+
+        let customEvent = {
+            getModifierState: (s) => { return isCapsLock; },
+            shiftKey: event.shiftKey || this._checkStickingShiftForMouse(),
+            isMouseEvent: true
+        }
+        if(this._checkShift(eventCode) || this._checkControl(eventCode) || this._checkAlt(eventCode)) {
+            if(this._keyStickingForMouse.specialKeys.includes(eventCode)){
+                this._keyStickingForMouse.specialKeys = 
+                        this._keyStickingForMouse.specialKeys.filter(o=>o!=eventCode);
+                if(this._checkShift(eventCode))
+                    customEvent.shiftKey = event.shiftKey || this._checkStickingShiftForMouse();
+                this._keyUpEvent(eventCode, customEvent);
+                return;
+            } else {
+                this._keyStickingForMouse.specialKeys.push(eventCode);
+                customEvent.shiftKey = event.shiftKey || this._checkStickingShiftForMouse();
+                this._keyDownEvent(eventCode, customEvent);
+            }
+
+        } else {
+            this._keyDownEvent(eventCode, customEvent);
+            customEvent.shiftKey = event.shiftKey;
+            this._keyUpEvent(eventCode, customEvent);
+            if(this._keyStickingForMouse.specialKeys.length)
+            {
+                this._keyStickingForMouse.specialKeys.forEach(specialKey => {
+                    this._keyUpEvent(specialKey, customEvent);
+                });
+                this._keyStickingForMouse.specialKeys = [];
+            }
+        }
+
+
+        // let shiftMouse = (eventCode === 'ShiftLeft' || eventCode === 'ShiftRight') ? eventCode : false;
+        // if(Boolean(shiftMouse)&&Boolean(this._keyStickingForMouse.shiftMouse)){
+        //     this._keyUpEvent(this._keyStickingForMouse.shiftMouse, {
+        //         getModifierState: (s) => { return isCapsLock; },
+        //         shiftKey: false,
+        //         isMouseEvent: true
+        //     });
+        //     this._keyStickingForMouse.shiftMouse = undefined;
+        //     return;
+        // }
+        // if(!shiftMouse)
+        // {
+        //     let customEvent = {
+        //         getModifierState: (s) => { return isCapsLock; },
+        //         shiftKey: event.shiftKey || Boolean(this._keyStickingForMouse.shiftMouse),
+        //         isMouseEvent: true
+        //     }
+        //     this._keyDownEvent(eventCode, customEvent);
+        //     customEvent.shiftKey = event.shiftKey;
+        //     this._keyUpEvent(eventCode, customEvent);
+        //     if(this._keyStickingForMouse.shiftMouse){
+        //         this._keyUpEvent(this._keyStickingForMouse.shiftMouse, {
+        //             getModifierState: (s) => { return isCapsLock; },
+        //             shiftKey: false,
+        //             isMouseEvent: true
+        //         });
+        //         this._keyStickingForMouse.shiftMouse = undefined;
+        //     }
+        // }
+        // else {
+        //     this._keyStickingForMouse.shiftMouse = shiftMouse;
+            
+        //     let customEvent = {
+        //         getModifierState: (s) => { return isCapsLock; },
+        //         shiftKey: event.shiftKey || Boolean(this._keyStickingForMouse.shiftMouse),
+        //         isMouseEvent: true
+        //     }
+        //     this._keyDownEvent(eventCode, customEvent);
+        // }
     }
 
     _setSettings(isShift, isCapsLock) {
@@ -59,6 +162,27 @@ export class Keyboard {
         if(this._settings.changeSettingsCaps(isCapsLock)) {
             this._layout.setCapsLock(isCapsLock, isShift);
         }
+    }
+
+    _checkChangeLanguage(eventCode) {
+        return ((eventCode === 'ShiftLeft' || eventCode === 'ShiftRight') &&
+            (this._keys['ControlLeft'] || this._keys['ControlRight'])) || 
+            ((eventCode === 'ControlLeft' || eventCode === 'ControlRight') &&
+            (this._keys['ShiftLeft'] || this._keys['ShiftRight']));
+    }
+
+    _checkShift(eventCode) {
+        return eventCode === 'ShiftLeft' || eventCode === 'ShiftRight';
+    }
+    _checkControl(eventCode) {
+        return eventCode === 'ControlLeft' || eventCode === 'ControlRight';
+    }
+    _checkAlt(eventCode) {
+        return eventCode === 'AltLeft' || eventCode === 'AltRight';
+    }
+    _checkStickingShiftForMouse() {
+        return this._keyStickingForMouse.specialKeys.includes('ShiftLeft') || 
+            this._keyStickingForMouse.specialKeys.includes('ShiftRight');
     }
     //#endregion private methods
 }

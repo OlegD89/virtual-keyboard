@@ -1,4 +1,15 @@
-export const languages = {'ru':1 , 'en':2}
+export const languages = {
+    'ru': {
+        name: 'ru',
+        nameShift: 'ruShift',
+        nameUnShift: 'ruUnShift',
+    }, 
+    'en':{
+        name: 'en',
+        nameShift: 'enShift',
+        nameUnShift: 'enUnShift',
+    }
+}
 export class Settings {
     constructor() {
         this._isShift = false;
@@ -21,5 +32,9 @@ export class Settings {
             return true;
         }
         return false;
+    }
+    changeAndGetLanguage() {
+        this._language = this._language == languages.en ? languages.ru : languages.en;
+        return this._language;
     }
 }

@@ -15,21 +15,21 @@ export const keysDictionary = {
     '2': {
         keyCode: 'Digit2',
         ruUnShift: '2',
-        ruShift: '!',
+        ruShift: '"',
         enUnShift: '2',
         enShift: '@'
     },
     '3': {
         keyCode: 'Digit3',
         ruUnShift: '3',
-        ruShift: '!',
+        ruShift: '№',
         enUnShift: '3',
         enShift: '#'
     },
     '4': {
         keyCode: 'Digit4',
         ruUnShift: '4',
-        ruShift: '!',
+        ruShift: ';',
         enUnShift: '4',
         enShift: '$'
     },
@@ -43,14 +43,14 @@ export const keysDictionary = {
     '6': {
         keyCode: 'Digit6',
         ruUnShift: '6',
-        ruShift: '!',
+        ruShift: ':',
         enUnShift: '6',
         enShift: '^'
     },
     '7': {
         keyCode: 'Digit7',
-        ruUnShift: '1',
-        ruShift: '!',
+        ruUnShift: '7',
+        ruShift: '?',
         enUnShift: '7',
         enShift: '&'
     },
@@ -107,12 +107,12 @@ export const keysDictionary = {
     },
     'e': {
         keyCode: 'KeyE',
-        ru: '',
+        ru: 'у',
         en: 'e'
     },
     'r': {
         keyCode: 'KeyR',
-        ru: '',
+        ru: 'к',
         en: 'r'
     },
     't': {
@@ -159,7 +159,8 @@ export const keysDictionary = {
     },
     '\\': {
         keyCode: 'Backslash',
-        ru: '\\',
+        ruUnShift: '\\',
+        ruShift: '/',
         enUnShift: '\\',
         enShift: '|'
     },
@@ -263,8 +264,7 @@ export const keysDictionary = {
     },
     ',': {
         keyCode: 'Slash',
-        ruUnShift: '.',
-        ruShift: ',',
+        ru: 'б',
         enUnShift: ',',
         enShift: '<'
     },
@@ -276,7 +276,8 @@ export const keysDictionary = {
     },
     '/': {
         keyCode: 'Comma',
-        ru: 'б',
+        ruUnShift: '.',
+        ruShift: ',',
         enUnShift: '/',
         enShift: '?'
     },

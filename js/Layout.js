@@ -5,11 +5,7 @@ export class Layout {
     constructor() {
         this._body = document.querySelector('body');
         this._input = undefined;
-        this._status = {
-            language: languages.en,
-            shift: false,
-            capslock: false
-        }
+        this._language = languages.en
         this._keys = {};
     }
 
@@ -22,11 +18,6 @@ export class Layout {
         wrapper.appendChild(this._createKeyboard());
     }
 
-    show(language, specialKeys) {
-        if(language == this._status.language)
-            return;
-    }
-
     pressKey(keyCode, isPress) {
         let keyElement = this._keys[keyCode].element;
         if(isPress) {
@@ -34,19 +25,12 @@ export class Layout {
         }else {
             keyElement.classList.remove('key_press')
         }
-
-        switch (keyCode) {
-            case 'ShiftLeft':
-            case 'ShiftRight':
-                if(this._status.shift != isPress) {
-
-                }
-                break;
-        }
     }
 
     print(keyCode) {
         let key = this._keys[keyCode];
+        var cursorPosition = this._input.selectionStart; //TODO реализовать работу с выбранным местом
+
         if(!key.element.classList.contains('special')){
             this._input.value += this._keys[keyCode].text;
         }else {
@@ -68,8 +52,8 @@ export class Layout {
     }
 
     setShift(isShift, isCapsLock) {
-        const getProperty = isShift?'enShift':'enUnShift';
-        let keys = Object.entries(this._keys).filter(o=>o[1][getProperty]);
+        const getProperty = isShift ? this._language.nameShift : this._language.nameUnShift;
+        let keys = this._getKeysArray().filter(o=>o[1][getProperty]);
         keys.forEach(key => {
             let char = key[1][getProperty];
             let element = key[1].element.firstElementChild;
@@ -77,12 +61,11 @@ export class Layout {
             key[1].text = char;
         });
         this.setCapsLock(isCapsLock, isShift);
-
     }
 
     setCapsLock(isCapsLock, isShift) {
-        let getPropertyChar = 'en';
-        let keysChar = Object.entries(this._keys).filter(o=>o[1][getPropertyChar]);
+        let getPropertyChar = this._language.name;
+        let keysChar = this._getKeysArray().filter(o=>o[1][getPropertyChar]);
         keysChar.forEach(key => {
             let char = key[1][getPropertyChar];
             char = isShift^isCapsLock ? char.toUpperCase() : char.toLowerCase();
@@ -90,6 +73,16 @@ export class Layout {
             element.textContent = char;
             key[1].text = char;
         });
+    }
+
+    changeLanguage(language, isShift, isCapsLock) {
+        this._language = language;
+        this.setShift(isShift, isCapsLock);
+    }
+
+    getKeyCodeByElement(elementKey) {
+        let key = this._getKeysArray().find(key=>key[1].element === elementKey);
+        return key[0];
     }
     //#endregion public methods
 
@@ -165,7 +158,7 @@ export class Layout {
             }
             case 5: {
                 keyboardRow.appendChild(that._createKey(this._getKeyWithCode('Ctrl', 'ControlLeft'), 'special', 'ctrl-left'));
-                keyboardRow.appendChild(that._createKey(this._getKey('Win'), 'special', 'win'));
+                keyboardRow.appendChild(that._createKey(this._getKeyWithCode('Win', 'MetaLeft'), 'special', 'win'));
                 keyboardRow.appendChild(that._createKey(this._getKeyWithCode('Alt', 'AltLeft'), 'special', 'alt-left'));
                 keyboardRow.appendChild(that._createKey(this._getKeyWithCode(' ', 'Space'), 'space'));
                 keyboardRow.appendChild(that._createKey(this._getKeyWithCode('Alt', 'AltRight'), 'special', 'alt-right'));
@@ -206,6 +199,9 @@ export class Layout {
         let key = keysDictionary[code] ? keysDictionary[code] : {};
         key.text = text
         return key;
+    }
+    _getKeysArray() {
+        return Object.entries(this._keys);
     }
     //#endregion keys
 

@@ -101,11 +101,25 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+// TODO Реализовать:
+// Сохранение языка, (сочетание клавиш для переключения языка должно быть указано на странице с клавиатурой)
+// Анимация нажатия на кнопку
+// Перемещение курсора и вставка имволов на место курсора
+// Подключение eslint
+
 class Keyboard {
     constructor() {
         this._layout = new _Layout__WEBPACK_IMPORTED_MODULE_0__["Layout"]();
         this._settings = new _Settings__WEBPACK_IMPORTED_MODULE_1__["Settings"]();
         this._keys = {};
+        this._keyStickingForMouse = {
+            isCapsLock: undefined,
+            shiftMouse: undefined,
+            controlMouse: undefined,
+            altMouse: undefined,
+            specialKeys: []
+        }
+        this._isCapsLockMouse = false;
     }
 
     //#region public methods
@@ -116,18 +130,23 @@ class Keyboard {
         this._layout.create();
     }
 
-    show() {
-        this._layout.show(this._settings.language);
-    }
-
     run() {
         const that = this;
         document.addEventListener('keydown', function(event) {
                 that._keyDownEvent(event.code, event);
+                event.preventDefault();
             });
         document.addEventListener('keyup', function(event) {
-                that._keyUpEvent(event.code);
+                that._keyUpEvent(event.code, event);
           });
+        document.querySelector('.keyboard').addEventListener('click', function(e) {
+            let elementKey = e.target.classList.contains('key') ? e.target : 
+                e.target.classList.contains('key__text') ? e.target.parentElement : null; 
+            if(!elementKey) return
+
+            let keyCode = that._layout.getKeyCodeByElement(elementKey);
+            that._keyMouseClickEvent(keyCode);            
+        })
     }
     //#endregion public methods
 
@@ -142,14 +161,98 @@ class Keyboard {
         this._layout.print(eventCode);
     }
 
-    _keyUpEvent(eventCode) {
+    _keyUpEvent(eventCode, event) {
         if(this._keys[eventCode]){
             this._keys[eventCode] = undefined;
             const isCapsLock = event.getModifierState("CapsLock");
             if(eventCode !== 'CapsLock' || !isCapsLock)
                 this._layout.pressKey(eventCode, false);
             this._setSettings(event.shiftKey, isCapsLock);
+
+            if(this._checkChangeLanguage(eventCode)){
+                let language = this._settings.changeAndGetLanguage();
+                this._layout.changeLanguage(language, event.shiftKey, isCapsLock);
+            }
         }
+    }
+
+    _keyMouseClickEvent(eventCode) {
+        //if(this._keys[eventCode]) return
+        if(eventCode == 'CapsLock') this._isCapsLockMouse = !this._isCapsLockMouse;
+        let isCapsLock = this._isCapsLockMouse;
+
+        let customEvent = {
+            getModifierState: (s) => { return isCapsLock; },
+            shiftKey: event.shiftKey || this._checkStickingShiftForMouse(),
+            isMouseEvent: true
+        }
+        if(this._checkShift(eventCode) || this._checkControl(eventCode) || this._checkAlt(eventCode)) {
+            if(this._keyStickingForMouse.specialKeys.includes(eventCode)){
+                this._keyStickingForMouse.specialKeys = 
+                        this._keyStickingForMouse.specialKeys.filter(o=>o!=eventCode);
+                if(this._checkShift(eventCode))
+                    customEvent.shiftKey = event.shiftKey || this._checkStickingShiftForMouse();
+                this._keyUpEvent(eventCode, customEvent);
+                return;
+            } else {
+                this._keyStickingForMouse.specialKeys.push(eventCode);
+                customEvent.shiftKey = event.shiftKey || this._checkStickingShiftForMouse();
+                this._keyDownEvent(eventCode, customEvent);
+            }
+
+        } else {
+            this._keyDownEvent(eventCode, customEvent);
+            customEvent.shiftKey = event.shiftKey;
+            this._keyUpEvent(eventCode, customEvent);
+            if(this._keyStickingForMouse.specialKeys.length)
+            {
+                this._keyStickingForMouse.specialKeys.forEach(specialKey => {
+                    this._keyUpEvent(specialKey, customEvent);
+                });
+                this._keyStickingForMouse.specialKeys = [];
+            }
+        }
+
+
+        // let shiftMouse = (eventCode === 'ShiftLeft' || eventCode === 'ShiftRight') ? eventCode : false;
+        // if(Boolean(shiftMouse)&&Boolean(this._keyStickingForMouse.shiftMouse)){
+        //     this._keyUpEvent(this._keyStickingForMouse.shiftMouse, {
+        //         getModifierState: (s) => { return isCapsLock; },
+        //         shiftKey: false,
+        //         isMouseEvent: true
+        //     });
+        //     this._keyStickingForMouse.shiftMouse = undefined;
+        //     return;
+        // }
+        // if(!shiftMouse)
+        // {
+        //     let customEvent = {
+        //         getModifierState: (s) => { return isCapsLock; },
+        //         shiftKey: event.shiftKey || Boolean(this._keyStickingForMouse.shiftMouse),
+        //         isMouseEvent: true
+        //     }
+        //     this._keyDownEvent(eventCode, customEvent);
+        //     customEvent.shiftKey = event.shiftKey;
+        //     this._keyUpEvent(eventCode, customEvent);
+        //     if(this._keyStickingForMouse.shiftMouse){
+        //         this._keyUpEvent(this._keyStickingForMouse.shiftMouse, {
+        //             getModifierState: (s) => { return isCapsLock; },
+        //             shiftKey: false,
+        //             isMouseEvent: true
+        //         });
+        //         this._keyStickingForMouse.shiftMouse = undefined;
+        //     }
+        // }
+        // else {
+        //     this._keyStickingForMouse.shiftMouse = shiftMouse;
+            
+        //     let customEvent = {
+        //         getModifierState: (s) => { return isCapsLock; },
+        //         shiftKey: event.shiftKey || Boolean(this._keyStickingForMouse.shiftMouse),
+        //         isMouseEvent: true
+        //     }
+        //     this._keyDownEvent(eventCode, customEvent);
+        // }
     }
 
     _setSettings(isShift, isCapsLock) {
@@ -159,6 +262,27 @@ class Keyboard {
         if(this._settings.changeSettingsCaps(isCapsLock)) {
             this._layout.setCapsLock(isCapsLock, isShift);
         }
+    }
+
+    _checkChangeLanguage(eventCode) {
+        return ((eventCode === 'ShiftLeft' || eventCode === 'ShiftRight') &&
+            (this._keys['ControlLeft'] || this._keys['ControlRight'])) || 
+            ((eventCode === 'ControlLeft' || eventCode === 'ControlRight') &&
+            (this._keys['ShiftLeft'] || this._keys['ShiftRight']));
+    }
+
+    _checkShift(eventCode) {
+        return eventCode === 'ShiftLeft' || eventCode === 'ShiftRight';
+    }
+    _checkControl(eventCode) {
+        return eventCode === 'ControlLeft' || eventCode === 'ControlRight';
+    }
+    _checkAlt(eventCode) {
+        return eventCode === 'AltLeft' || eventCode === 'AltRight';
+    }
+    _checkStickingShiftForMouse() {
+        return this._keyStickingForMouse.specialKeys.includes('ShiftLeft') || 
+            this._keyStickingForMouse.specialKeys.includes('ShiftRight');
     }
     //#endregion private methods
 }
@@ -192,21 +316,21 @@ const keysDictionary = {
     '2': {
         keyCode: 'Digit2',
         ruUnShift: '2',
-        ruShift: '!',
+        ruShift: '"',
         enUnShift: '2',
         enShift: '@'
     },
     '3': {
         keyCode: 'Digit3',
         ruUnShift: '3',
-        ruShift: '!',
+        ruShift: '№',
         enUnShift: '3',
         enShift: '#'
     },
     '4': {
         keyCode: 'Digit4',
         ruUnShift: '4',
-        ruShift: '!',
+        ruShift: ';',
         enUnShift: '4',
         enShift: '$'
     },
@@ -220,14 +344,14 @@ const keysDictionary = {
     '6': {
         keyCode: 'Digit6',
         ruUnShift: '6',
-        ruShift: '!',
+        ruShift: ':',
         enUnShift: '6',
         enShift: '^'
     },
     '7': {
         keyCode: 'Digit7',
-        ruUnShift: '1',
-        ruShift: '!',
+        ruUnShift: '7',
+        ruShift: '?',
         enUnShift: '7',
         enShift: '&'
     },
@@ -284,12 +408,12 @@ const keysDictionary = {
     },
     'e': {
         keyCode: 'KeyE',
-        ru: '',
+        ru: 'у',
         en: 'e'
     },
     'r': {
         keyCode: 'KeyR',
-        ru: '',
+        ru: 'к',
         en: 'r'
     },
     't': {
@@ -336,7 +460,8 @@ const keysDictionary = {
     },
     '\\': {
         keyCode: 'Backslash',
-        ru: '\\',
+        ruUnShift: '\\',
+        ruShift: '/',
         enUnShift: '\\',
         enShift: '|'
     },
@@ -440,8 +565,7 @@ const keysDictionary = {
     },
     ',': {
         keyCode: 'Slash',
-        ruUnShift: '.',
-        ruShift: ',',
+        ru: 'б',
         enUnShift: ',',
         enShift: '<'
     },
@@ -453,7 +577,8 @@ const keysDictionary = {
     },
     '/': {
         keyCode: 'Comma',
-        ru: 'б',
+        ruUnShift: '.',
+        ruShift: ',',
         enUnShift: '/',
         enShift: '?'
     },
@@ -529,11 +654,7 @@ class Layout {
     constructor() {
         this._body = document.querySelector('body');
         this._input = undefined;
-        this._status = {
-            language: _Settings__WEBPACK_IMPORTED_MODULE_1__["languages"].en,
-            shift: false,
-            capslock: false
-        }
+        this._language = _Settings__WEBPACK_IMPORTED_MODULE_1__["languages"].en
         this._keys = {};
     }
 
@@ -546,11 +667,6 @@ class Layout {
         wrapper.appendChild(this._createKeyboard());
     }
 
-    show(language, specialKeys) {
-        if(language == this._status.language)
-            return;
-    }
-
     pressKey(keyCode, isPress) {
         let keyElement = this._keys[keyCode].element;
         if(isPress) {
@@ -558,19 +674,12 @@ class Layout {
         }else {
             keyElement.classList.remove('key_press')
         }
-
-        switch (keyCode) {
-            case 'ShiftLeft':
-            case 'ShiftRight':
-                if(this._status.shift != isPress) {
-
-                }
-                break;
-        }
     }
 
     print(keyCode) {
         let key = this._keys[keyCode];
+        var cursorPosition = this._input.selectionStart; //TODO реализовать работу с выбранным местом
+
         if(!key.element.classList.contains('special')){
             this._input.value += this._keys[keyCode].text;
         }else {
@@ -592,8 +701,8 @@ class Layout {
     }
 
     setShift(isShift, isCapsLock) {
-        const getProperty = isShift?'enShift':'enUnShift';
-        let keys = Object.entries(this._keys).filter(o=>o[1][getProperty]);
+        const getProperty = isShift ? this._language.nameShift : this._language.nameUnShift;
+        let keys = this._getKeysArray().filter(o=>o[1][getProperty]);
         keys.forEach(key => {
             let char = key[1][getProperty];
             let element = key[1].element.firstElementChild;
@@ -601,12 +710,11 @@ class Layout {
             key[1].text = char;
         });
         this.setCapsLock(isCapsLock, isShift);
-
     }
 
     setCapsLock(isCapsLock, isShift) {
-        let getPropertyChar = 'en';
-        let keysChar = Object.entries(this._keys).filter(o=>o[1][getPropertyChar]);
+        let getPropertyChar = this._language.name;
+        let keysChar = this._getKeysArray().filter(o=>o[1][getPropertyChar]);
         keysChar.forEach(key => {
             let char = key[1][getPropertyChar];
             char = isShift^isCapsLock ? char.toUpperCase() : char.toLowerCase();
@@ -614,6 +722,16 @@ class Layout {
             element.textContent = char;
             key[1].text = char;
         });
+    }
+
+    changeLanguage(language, isShift, isCapsLock) {
+        this._language = language;
+        this.setShift(isShift, isCapsLock);
+    }
+
+    getKeyCodeByElement(elementKey) {
+        let key = this._getKeysArray().find(key=>key[1].element === elementKey);
+        return key[0];
     }
     //#endregion public methods
 
@@ -689,7 +807,7 @@ class Layout {
             }
             case 5: {
                 keyboardRow.appendChild(that._createKey(this._getKeyWithCode('Ctrl', 'ControlLeft'), 'special', 'ctrl-left'));
-                keyboardRow.appendChild(that._createKey(this._getKey('Win'), 'special', 'win'));
+                keyboardRow.appendChild(that._createKey(this._getKeyWithCode('Win', 'MetaLeft'), 'special', 'win'));
                 keyboardRow.appendChild(that._createKey(this._getKeyWithCode('Alt', 'AltLeft'), 'special', 'alt-left'));
                 keyboardRow.appendChild(that._createKey(this._getKeyWithCode(' ', 'Space'), 'space'));
                 keyboardRow.appendChild(that._createKey(this._getKeyWithCode('Alt', 'AltRight'), 'special', 'alt-right'));
@@ -731,6 +849,9 @@ class Layout {
         key.text = text
         return key;
     }
+    _getKeysArray() {
+        return Object.entries(this._keys);
+    }
     //#endregion keys
 
     //#endregion private methods
@@ -750,7 +871,18 @@ class Layout {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "languages", function() { return languages; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Settings", function() { return Settings; });
-const languages = {'ru':1 , 'en':2}
+const languages = {
+    'ru': {
+        name: 'ru',
+        nameShift: 'ruShift',
+        nameUnShift: 'ruUnShift',
+    }, 
+    'en':{
+        name: 'en',
+        nameShift: 'enShift',
+        nameUnShift: 'enUnShift',
+    }
+}
 class Settings {
     constructor() {
         this._isShift = false;
@@ -774,6 +906,10 @@ class Settings {
         }
         return false;
     }
+    changeAndGetLanguage() {
+        this._language = this._language == languages.en ? languages.ru : languages.en;
+        return this._language;
+    }
 }
 
 /***/ }),
@@ -795,7 +931,6 @@ window.onload = function() {
 
     const keyboard = new _Keyboard__WEBPACK_IMPORTED_MODULE_0__["Keyboard"]();
     keyboard.init();
-    keyboard.show();
     keyboard.run();
 }
 
