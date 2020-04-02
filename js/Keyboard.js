@@ -2,8 +2,6 @@ import { Layout } from './Layout'
 import { Settings } from './Settings'
 
 // TODO Реализовать:
-// Анимация нажатия на кнопку
-// Перемещение курсора и вставка имволов на место курсора
 // Подключение eslint
 
 export class Keyboard {
@@ -20,8 +18,6 @@ export class Keyboard {
 
     //#region public methods
     init() {
-        console.log("Keyboard init");
-
         this._settings.load();
         this._layout.create(this._settings.getLanguage());
     }

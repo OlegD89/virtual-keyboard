@@ -284,6 +284,9 @@ export const keysDictionary = {
     'Enter': {
         keyCode: 'Enter',
     },
+    'NumpadEnter': {
+        keyCode: 'Enter',
+    },
     'Delete': {
         keyCode: 'Delete',
     },

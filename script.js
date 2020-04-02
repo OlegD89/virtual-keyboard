@@ -102,8 +102,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 // TODO Реализовать:
-// Анимация нажатия на кнопку
-// Перемещение курсора и вставка имволов на место курсора
 // Подключение eslint
 
 class Keyboard {
@@ -120,8 +118,6 @@ class Keyboard {
 
     //#region public methods
     init() {
-        console.log("Keyboard init");
-
         this._settings.load();
         this._layout.create(this._settings.getLanguage());
     }
@@ -539,6 +535,9 @@ const keysDictionary = {
     'Enter': {
         keyCode: 'Enter',
     },
+    'NumpadEnter': {
+        keyCode: 'Enter',
+    },
     'Delete': {
         keyCode: 'Delete',
     },
@@ -600,8 +599,6 @@ const keysDictionary = {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Layout", function() { return Layout; });
 /* harmony import */ var _Keys__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Keys */ "./js/Keys.js");
-/* harmony import */ var _Settings__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Settings */ "./js/Settings.js");
-
 
 
 class Layout {
@@ -632,27 +629,46 @@ class Layout {
     }
 
     print(keyCode) {
+        this._input.focus();
         let key = this._keys[keyCode];
-        var cursorPosition = this._input.selectionStart; //TODO реализовать работу с выбранным местом
-
+        let selectionStart = this._input.selectionStart
         if(!key.element.classList.contains('special')){
-            this._input.value += this._keys[keyCode].text;
+            this._input.value = this._setChar(key.text);
         }else {
             switch (keyCode) {
                 case 'Backspace':
-                    this._input.value = this._input.value.slice(0, -1)
+                    this._input.value = this._getTextBeforePosition().slice(0, -1) + 
+                        this._getTextAfterPosition();
+                    selectionStart -= 2;
                     break;
                 case 'Tab':
-                    this._input.value += '\t';
+                    this._input.value = this._setChar('\t');
                     break;
                 case 'Enter':
-                    this._input.value += '\n';
+                case 'NumpadEnter':
+                    this._input.value = this._setChar('\n');
                     break;
                 case 'Delete':
-                    this._input.value = this._input.value.substr(1)
+                    this._input.value = this._getTextBeforePosition() + 
+                        this._getTextAfterPosition().slice(1) ;
                     break;
+                case 'ArrowLeft':
+                    this._input.selectionStart -= 1
+                    this._input.selectionEnd -= 1
+                    return;
+                case 'ArrowRight':
+                    this._input.selectionStart += 1
+                    return;
+                case 'ArrowUp':
+                    this._setCurrentPositionUp();
+                    return;
+                case 'ArrowDown':
+                    this._setCurrentPositionDown();
+                    return;
             }
         }
+        selectionStart++;
+        this._input.setSelectionRange(selectionStart, selectionStart);
     }
 
     setShift(isShift, isCapsLock) {
@@ -711,6 +727,7 @@ class Layout {
         keyboard.appendChild(this._createKeysRow(3));
         keyboard.appendChild(this._createKeysRow(4));
         keyboard.appendChild(this._createKeysRow(5));
+        this._createDublicateKeys();
         return keyboard;
     }
 
@@ -792,6 +809,25 @@ class Layout {
         keySpan.textContent = text;
         return keySpan;
     }
+    _createDublicateKeys() {
+        this._keys['NumpadEnter'] = this._keys['Enter'];
+        //для задания не требуется, поэтому делаю не совсем верно, для удобства
+        this._keys['Numpad1'] = this._keys['Digit1'];
+        this._keys['Numpad2'] = this._keys['Digit2'];
+        this._keys['Numpad3'] = this._keys['Digit3'];
+        this._keys['Numpad4'] = this._keys['Digit4'];
+        this._keys['Numpad5'] = this._keys['Digit5'];
+        this._keys['Numpad6'] = this._keys['Digit6'];
+        this._keys['Numpad7'] = this._keys['Digit7'];
+        this._keys['Numpad8'] = this._keys['Digit8'];
+        this._keys['Numpad9'] = this._keys['Digit9'];
+        this._keys['Numpad0'] = this._keys['Digit0'];
+        this._keys['NumpadDivide'] = this._keys['Slash'];
+        //this._keys['NumpadMultiply'] = this._keys[''];
+        this._keys['NumpadSubtract'] = this._keys['Minus'];
+        //this._keys['NumpadAdd'] = this._keys[''];
+        this._keys['NumpadDecimal'] = this._keys['Period'];
+    }
 
     _createDescription(){
         let descriptionSpan = document.createElement('span');
@@ -810,12 +846,76 @@ class Layout {
         let key = _Keys__WEBPACK_IMPORTED_MODULE_0__["keysDictionary"][code] ? _Keys__WEBPACK_IMPORTED_MODULE_0__["keysDictionary"][code] : {};
         key.text = key[this._language.nameUnShift] || key[this._language.name] || text
         return key;
-    }
+    }    
     _getKeysArray() {
         return Object.entries(this._keys);
     }
     //#endregion keys
 
+    //#region print
+
+    //#endregion print
+    _setCurrentPositionUp() {
+        let text = this._input.value;
+        let rows = text.split('\n');
+        let currentPosition = this._input.selectionStart;
+        let indicesEndRows = this._getIndicesEndRows(text);
+        let currentRow = this._getCurrentRowIndex(indicesEndRows, currentPosition);
+
+        let newPosition;
+        if(currentRow==0) {
+            newPosition = 0;
+        } else {
+            newPosition = currentPosition - rows[currentRow-1].length - 1; //1='\n'
+            if(newPosition>indicesEndRows[currentRow-1])
+                newPosition = indicesEndRows[currentRow-1];
+        }
+        this._input.setSelectionRange(newPosition, newPosition);
+    }
+    _setCurrentPositionDown() {        
+        let text = this._input.value;
+        let rows = text.split('\n');
+        let currentPosition = this._input.selectionStart;
+        let indicesEndRows = this._getIndicesEndRows(text);
+        let currentRow = this._getCurrentRowIndex(indicesEndRows, currentPosition);
+
+        let newPosition;
+        if(currentRow==indicesEndRows.length-1) {
+            newPosition = indicesEndRows[indicesEndRows.length-1];
+        } else {
+            newPosition = currentPosition + rows[currentRow].length + 1; //1='\n'
+            if(newPosition>indicesEndRows[currentRow+1])
+                newPosition = indicesEndRows[currentRow+1];
+        }
+        this._input.setSelectionRange(newPosition, newPosition);
+    }
+    _getIndicesEndRows(text) {
+        let regex = /\n/gi, result, indicesEndRows = [];
+        while ( (result = regex.exec(text)) ) {
+            indicesEndRows.push(result.index);
+        }
+        indicesEndRows.push(text.length);
+        return indicesEndRows;
+    }
+    _getCurrentRowIndex(indicesEndRows, currentPosition) {
+        let currentRow;
+        for(let i = 0; i<indicesEndRows.length; i++) {
+            if(indicesEndRows[i]>=currentPosition){
+                currentRow = i;
+                break;
+            }
+        }
+        return currentRow;
+    }
+    _setChar(text) {
+        return this._getTextBeforePosition() + text + this._getTextAfterPosition();
+    }
+    _getTextBeforePosition() {
+        return this._input.value.slice(0, this._input.selectionStart);
+    }
+    _getTextAfterPosition() {
+        return this._input.value.slice(this._input.selectionStart);
+    }
     //#endregion private methods
 
 }
@@ -900,8 +1000,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 window.onload = function() {
-    console.log("Run start");
-
     const keyboard = new _Keyboard__WEBPACK_IMPORTED_MODULE_0__["Keyboard"]();
     keyboard.init();
     keyboard.run();
