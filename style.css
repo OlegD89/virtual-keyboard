@@ -32,6 +32,13 @@ body {
   justify-content: center;
 }
 
+.description-text {
+  margin: 30px 0 0 20px;
+  display: block;
+  font-size: 1rem;
+  color: #555555;
+}
+
 .key {
   width: 40px;
   height: 40px;
@@ -47,6 +54,9 @@ body {
 .key.key.key_press {
   background-color: #005800;
 }
+.key.key.key_press:hover {
+  background-color: #002b00;
+}
 .key:hover {
   background-color: #0000c2;
 }
@@ -60,6 +70,9 @@ body {
 }
 .key.special.key_press {
   background-color: #005800;
+}
+.key.special.key_press:hover {
+  background-color: #002b00;
 }
 .key.special:hover {
   background-color: #390085;

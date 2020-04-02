@@ -5,17 +5,18 @@ export class Layout {
     constructor() {
         this._body = document.querySelector('body');
         this._input = undefined;
-        this._language = languages.en
         this._keys = {};
     }
 
     //#region public methods
-    create() {
+    create(language) {
+        this._language = language;
         let wrapper = this._createWrapper();
         this._body.appendChild(wrapper);
         this._input = this._createInput();
         wrapper.appendChild(this._input);
         wrapper.appendChild(this._createKeyboard());
+        wrapper.appendChild(this._createDescription())
     }
 
     pressKey(keyCode, isPress) {
@@ -189,15 +190,22 @@ export class Layout {
         return keySpan;
     }
 
+    _createDescription(){
+        let descriptionSpan = document.createElement('span');
+        descriptionSpan.classList.add('description-text');
+        descriptionSpan.textContent = 'Переключение языка Ctrl+Shift';
+        return descriptionSpan;
+    }
+
     //#region keys
     _getKey(text) {
         let key = keysDictionary[text] ? keysDictionary[text] : {};
-        key.text = text
+        key.text = key[this._language.nameUnShift] || key[this._language.name] || text
         return key;
     }
     _getKeyWithCode(text, code) {
         let key = keysDictionary[code] ? keysDictionary[code] : {};
-        key.text = text
+        key.text = key[this._language.nameUnShift] || key[this._language.name] || text
         return key;
     }
     _getKeysArray() {

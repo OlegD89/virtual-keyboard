@@ -102,7 +102,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 // TODO Реализовать:
-// Сохранение языка, (сочетание клавиш для переключения языка должно быть указано на странице с клавиатурой)
 // Анимация нажатия на кнопку
 // Перемещение курсора и вставка имволов на место курсора
 // Подключение eslint
@@ -114,9 +113,6 @@ class Keyboard {
         this._keys = {};
         this._keyStickingForMouse = {
             isCapsLock: undefined,
-            shiftMouse: undefined,
-            controlMouse: undefined,
-            altMouse: undefined,
             specialKeys: []
         }
         this._isCapsLockMouse = false;
@@ -127,7 +123,7 @@ class Keyboard {
         console.log("Keyboard init");
 
         this._settings.load();
-        this._layout.create();
+        this._layout.create(this._settings.getLanguage());
     }
 
     run() {
@@ -177,7 +173,6 @@ class Keyboard {
     }
 
     _keyMouseClickEvent(eventCode) {
-        //if(this._keys[eventCode]) return
         if(eventCode == 'CapsLock') this._isCapsLockMouse = !this._isCapsLockMouse;
         let isCapsLock = this._isCapsLockMouse;
 
@@ -212,47 +207,6 @@ class Keyboard {
                 this._keyStickingForMouse.specialKeys = [];
             }
         }
-
-
-        // let shiftMouse = (eventCode === 'ShiftLeft' || eventCode === 'ShiftRight') ? eventCode : false;
-        // if(Boolean(shiftMouse)&&Boolean(this._keyStickingForMouse.shiftMouse)){
-        //     this._keyUpEvent(this._keyStickingForMouse.shiftMouse, {
-        //         getModifierState: (s) => { return isCapsLock; },
-        //         shiftKey: false,
-        //         isMouseEvent: true
-        //     });
-        //     this._keyStickingForMouse.shiftMouse = undefined;
-        //     return;
-        // }
-        // if(!shiftMouse)
-        // {
-        //     let customEvent = {
-        //         getModifierState: (s) => { return isCapsLock; },
-        //         shiftKey: event.shiftKey || Boolean(this._keyStickingForMouse.shiftMouse),
-        //         isMouseEvent: true
-        //     }
-        //     this._keyDownEvent(eventCode, customEvent);
-        //     customEvent.shiftKey = event.shiftKey;
-        //     this._keyUpEvent(eventCode, customEvent);
-        //     if(this._keyStickingForMouse.shiftMouse){
-        //         this._keyUpEvent(this._keyStickingForMouse.shiftMouse, {
-        //             getModifierState: (s) => { return isCapsLock; },
-        //             shiftKey: false,
-        //             isMouseEvent: true
-        //         });
-        //         this._keyStickingForMouse.shiftMouse = undefined;
-        //     }
-        // }
-        // else {
-        //     this._keyStickingForMouse.shiftMouse = shiftMouse;
-            
-        //     let customEvent = {
-        //         getModifierState: (s) => { return isCapsLock; },
-        //         shiftKey: event.shiftKey || Boolean(this._keyStickingForMouse.shiftMouse),
-        //         isMouseEvent: true
-        //     }
-        //     this._keyDownEvent(eventCode, customEvent);
-        // }
     }
 
     _setSettings(isShift, isCapsLock) {
@@ -265,9 +219,9 @@ class Keyboard {
     }
 
     _checkChangeLanguage(eventCode) {
-        return ((eventCode === 'ShiftLeft' || eventCode === 'ShiftRight') &&
+        return (this._checkShift(eventCode) &&
             (this._keys['ControlLeft'] || this._keys['ControlRight'])) || 
-            ((eventCode === 'ControlLeft' || eventCode === 'ControlRight') &&
+            (this._checkControl(eventCode) &&
             (this._keys['ShiftLeft'] || this._keys['ShiftRight']));
     }
 
@@ -654,17 +608,18 @@ class Layout {
     constructor() {
         this._body = document.querySelector('body');
         this._input = undefined;
-        this._language = _Settings__WEBPACK_IMPORTED_MODULE_1__["languages"].en
         this._keys = {};
     }
 
     //#region public methods
-    create() {
+    create(language) {
+        this._language = language;
         let wrapper = this._createWrapper();
         this._body.appendChild(wrapper);
         this._input = this._createInput();
         wrapper.appendChild(this._input);
         wrapper.appendChild(this._createKeyboard());
+        wrapper.appendChild(this._createDescription())
     }
 
     pressKey(keyCode, isPress) {
@@ -838,15 +793,22 @@ class Layout {
         return keySpan;
     }
 
+    _createDescription(){
+        let descriptionSpan = document.createElement('span');
+        descriptionSpan.classList.add('description-text');
+        descriptionSpan.textContent = 'Переключение языка Ctrl+Shift';
+        return descriptionSpan;
+    }
+
     //#region keys
     _getKey(text) {
         let key = _Keys__WEBPACK_IMPORTED_MODULE_0__["keysDictionary"][text] ? _Keys__WEBPACK_IMPORTED_MODULE_0__["keysDictionary"][text] : {};
-        key.text = text
+        key.text = key[this._language.nameUnShift] || key[this._language.name] || text
         return key;
     }
     _getKeyWithCode(text, code) {
         let key = _Keys__WEBPACK_IMPORTED_MODULE_0__["keysDictionary"][code] ? _Keys__WEBPACK_IMPORTED_MODULE_0__["keysDictionary"][code] : {};
-        key.text = text
+        key.text = key[this._language.nameUnShift] || key[this._language.name] || text
         return key;
     }
     _getKeysArray() {
@@ -890,7 +852,14 @@ class Settings {
         this._language = languages.en;
     }
     load() {
-        this._language = languages.en;
+        var language = sessionStorage.getItem('language');
+        switch (language) {
+            case languages.ru.name:
+                this._language = languages.ru;
+                break;
+            default:
+                this._language = languages.en;
+        }
     }
     changeSettingsShift(isShift) {
         if(this._isShift != isShift){
@@ -908,6 +877,10 @@ class Settings {
     }
     changeAndGetLanguage() {
         this._language = this._language == languages.en ? languages.ru : languages.en;
+        sessionStorage.setItem('language', this._language.name);
+        return this._language;
+    }
+    getLanguage(){
         return this._language;
     }
 }

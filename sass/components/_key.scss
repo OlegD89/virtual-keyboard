@@ -11,6 +11,9 @@
     cursor: pointer;
     &.key.key_press {
         background-color: #005800;
+        &:hover {
+            background-color: #002b00;
+        }
     }
     &:hover {
         background-color: #0000c2;
@@ -27,6 +30,9 @@
     background-color: #5100bb;
     &.key_press {
         background-color: #005800;
+        &:hover {
+            background-color: #002b00;
+        }
     }
     &:hover {
         background-color: #390085;
