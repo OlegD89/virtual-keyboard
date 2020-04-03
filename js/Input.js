@@ -1,9 +1,10 @@
 /* eslint-disable no-param-reassign */
 export default class Input {
-  constructor(input, keys) {
+  constructor(input, keys, language) {
     this._body = document.querySelector('body');
     this._input = input;
     this._keys = keys;
+    this._language = language;
   }
 
   // #region public methods

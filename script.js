@@ -98,10 +98,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Input; });
 /* eslint-disable no-param-reassign */
 class Input {
-  constructor(input, keys) {
+  constructor(input, keys, language) {
     this._body = document.querySelector('body');
     this._input = input;
     this._keys = keys;
+    this._language = language;
   }
 
   // #region public methods
@@ -313,7 +314,7 @@ class Keyboard {
   init() {
     this._settings.load();
     const layoutResult = this._layout.create(this._settings.getLanguage());
-    this._input = new _Input__WEBPACK_IMPORTED_MODULE_1__["default"](layoutResult.input, layoutResult.keys);
+    this._input = new _Input__WEBPACK_IMPORTED_MODULE_1__["default"](layoutResult.input, layoutResult.keys, this._settings.getLanguage());
   }
 
   run() {

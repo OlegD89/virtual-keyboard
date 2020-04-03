@@ -19,7 +19,7 @@ export default class Keyboard {
   init() {
     this._settings.load();
     const layoutResult = this._layout.create(this._settings.getLanguage());
-    this._input = new Input(layoutResult.input, layoutResult.keys);
+    this._input = new Input(layoutResult.input, layoutResult.keys, this._settings.getLanguage());
   }
 
   run() {
