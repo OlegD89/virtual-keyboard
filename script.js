@@ -763,7 +763,7 @@ const keysDictionary = {
     en: 'm',
   },
   ',': {
-    keyCode: 'Slash',
+    keyCode: 'Comma',
     ru: 'б',
     enUnShift: ',',
     enShift: '<',
@@ -775,7 +775,7 @@ const keysDictionary = {
     enShift: '>',
   },
   '/': {
-    keyCode: 'Comma',
+    keyCode: 'Slash',
     ruUnShift: '.',
     ruShift: ',',
     enUnShift: '/',
