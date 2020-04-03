@@ -1,7 +1,7 @@
 import Layout from './Layout';
 import { Settings } from './Settings';
 // TODO Реализовать:
-// Забить костыль на Shift
+// Можно разнести создание разметки и работу с ней
 export default class Keyboard {
   constructor() {
     this._layout = new Layout();
@@ -59,13 +59,17 @@ export default class Keyboard {
     if (this._keys[eventCode]) {
       this._keys[eventCode] = undefined;
       const isCapsLock = event.getModifierState('CapsLock');
-      if (eventCode !== 'CapsLock' || !isCapsLock) { this._layout.pressKey(eventCode, false); }
+      if (eventCode !== 'CapsLock' || !isCapsLock) {
+        this._layout.pressKey(eventCode, false);
+      }
       this._setSettings(event.shiftKey, isCapsLock);
 
       if (this._checkChangeLanguage(eventCode)) {
         const language = this._settings.changeAndGetLanguage();
         this._layout.changeLanguage(language, event.shiftKey, isCapsLock);
       }
+
+      this._fixTwoShiftKeyUpEvent(event);
     }
   }
 
@@ -134,6 +138,19 @@ export default class Keyboard {
   _checkStickingShiftForMouse() {
     return this._keyStickingForMouse.specialKeys.includes('ShiftLeft')
     || this._keyStickingForMouse.specialKeys.includes('ShiftRight');
+  }
+
+  _fixTwoShiftKeyUpEvent(event) {
+    if (!event.shiftKey) {
+      if (this._keys.ShiftLeft) {
+        this._layout.pressKey('ShiftLeft', false);
+        this._keys.ShiftLeft = undefined;
+      }
+      if (this._keys.ShiftRight) {
+        this._layout.pressKey('ShiftRight', false);
+        this._keys.ShiftRight = undefined;
+      }
+    }
   }
   // #endregion private methods
 }

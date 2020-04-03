@@ -242,7 +242,7 @@ export default class Layout {
   static _createDescription() {
     const descriptionSpan = document.createElement('span');
     descriptionSpan.classList.add('description-text');
-    descriptionSpan.textContent = 'Переключение языка Ctrl+Shift';
+    descriptionSpan.textContent = 'Переключение языка Ctrl+Shift, OS - Windows';
     return descriptionSpan;
   }
 
@@ -304,8 +304,9 @@ export default class Layout {
   }
 
   static _getIndicesEndRows(text) {
-    const regex = /\n/gi; let result; const
-      indicesEndRows = [];
+    const regex = /\n/gi;
+    let result;
+    const indicesEndRows = [];
     // eslint-disable-next-line no-cond-assign
     while ((result = regex.exec(text))) {
       indicesEndRows.push(result.index);

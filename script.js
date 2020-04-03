@@ -101,7 +101,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 // TODO Реализовать:
-// Забить костыль на Shift
+// Можно разнести создание разметки и работу с ней
 class Keyboard {
   constructor() {
     this._layout = new _Layout__WEBPACK_IMPORTED_MODULE_0__["default"]();
@@ -159,13 +159,17 @@ class Keyboard {
     if (this._keys[eventCode]) {
       this._keys[eventCode] = undefined;
       const isCapsLock = event.getModifierState('CapsLock');
-      if (eventCode !== 'CapsLock' || !isCapsLock) { this._layout.pressKey(eventCode, false); }
+      if (eventCode !== 'CapsLock' || !isCapsLock) {
+        this._layout.pressKey(eventCode, false);
+      }
       this._setSettings(event.shiftKey, isCapsLock);
 
       if (this._checkChangeLanguage(eventCode)) {
         const language = this._settings.changeAndGetLanguage();
         this._layout.changeLanguage(language, event.shiftKey, isCapsLock);
       }
+
+      this._fixTwoShiftKeyUpEvent(event);
     }
   }
 
@@ -234,6 +238,19 @@ class Keyboard {
   _checkStickingShiftForMouse() {
     return this._keyStickingForMouse.specialKeys.includes('ShiftLeft')
     || this._keyStickingForMouse.specialKeys.includes('ShiftRight');
+  }
+
+  _fixTwoShiftKeyUpEvent(event) {
+    if (!event.shiftKey) {
+      if (this._keys.ShiftLeft) {
+        this._layout.pressKey('ShiftLeft', false);
+        this._keys.ShiftLeft = undefined;
+      }
+      if (this._keys.ShiftRight) {
+        this._layout.pressKey('ShiftRight', false);
+        this._keys.ShiftRight = undefined;
+      }
+    }
   }
   // #endregion private methods
 }
@@ -847,7 +864,7 @@ class Layout {
   static _createDescription() {
     const descriptionSpan = document.createElement('span');
     descriptionSpan.classList.add('description-text');
-    descriptionSpan.textContent = 'Переключение языка Ctrl+Shift';
+    descriptionSpan.textContent = 'Переключение языка Ctrl+Shift, OS - Windows';
     return descriptionSpan;
   }
 
@@ -909,8 +926,9 @@ class Layout {
   }
 
   static _getIndicesEndRows(text) {
-    const regex = /\n/gi; let result; const
-      indicesEndRows = [];
+    const regex = /\n/gi;
+    let result;
+    const indicesEndRows = [];
     // eslint-disable-next-line no-cond-assign
     while ((result = regex.exec(text))) {
       indicesEndRows.push(result.index);
