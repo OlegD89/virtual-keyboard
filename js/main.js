@@ -1,7 +1,7 @@
-import { Keyboard } from "./Keyboard"
+import Keyboard from './Keyboard';
 
-window.onload = function() {
-    const keyboard = new Keyboard();
-    keyboard.init();
-    keyboard.run();
-}
+window.onload = () => {
+  const keyboard = new Keyboard();
+  keyboard.init();
+  keyboard.run();
+};
