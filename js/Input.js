@@ -9,6 +9,7 @@ export default class Input {
 
   // #region public methods
   pressKey(keyCode, isPress) {
+    if (!this._keys[keyCode]) { return; }
     const keyElement = this._keys[keyCode].element;
     if (isPress) {
       keyElement.classList.add('key_press');
@@ -18,6 +19,7 @@ export default class Input {
   }
 
   print(keyCode) {
+    if (!this._keys[keyCode]) { return; }
     this._input.focus();
     const key = this._keys[keyCode];
     let { selectionStart } = this._input;

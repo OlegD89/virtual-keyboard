@@ -1,7 +1,7 @@
 .key {
     width: 40px;
     height: 40px;
-    background-color: #0000ff;
+    background-color: $color-key;
     margin-left: 6px;
     margin-bottom: 6px;
     display: flex;
@@ -11,32 +11,26 @@
     cursor: pointer;
     transition: background-color 0.5s ease;
     &.key.key_press {
-        background-color: #005800;
+        background-color: $color-key-press;
         &:hover {
-            background-color: #002b00;
+            background-color: $color-key-press-hover;
         }
     }
     &:hover {
-        background-color: #0000c2;
+        background-color: $color-key-hover;
     }
-}
-
-
-
-.key__text {
-    user-select: none;
 }
 
 .key.special {
-    background-color: #5100bb;
+    background-color: $color-key-special;
     &.key_press {
-        background-color: #005800;
+        background-color: $color-key-press;
         &:hover {
-            background-color: #002b00;
+            background-color: $color-key-press-hover;
         }
     }
     &:hover {
-        background-color: #390085;
+        background-color: $color-key-special-hover;
     }
 }
 
@@ -58,4 +52,11 @@
 
 .key.space {
     width: 330px;
+}
+
+.key__text {
+    user-select: none;
+}
+.char .key__text, .letter .key__text {
+    font-weight: bold;
 }

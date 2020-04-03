@@ -9,5 +9,6 @@ module.exports = {
         "semi": ["error", "always"],
         "quotes": ["error", "single"],
         "no-underscore-dangle": [0], //локальные методы и переменные начинаются с _. this._Mesthod(); that._Method()
-    },
+        "linebreak-style": ["error", "windows"]
+      },
   }

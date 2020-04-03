@@ -41,7 +41,7 @@ body {
 .key {
   width: 40px;
   height: 40px;
-  background-color: #0000ff;
+  background-color: #8383ff;
   margin-left: 6px;
   margin-bottom: 6px;
   display: flex;
@@ -52,30 +52,26 @@ body {
   transition: background-color 0.5s ease;
 }
 .key.key.key_press {
-  background-color: #005800;
+  background-color: #316131;
 }
 .key.key.key_press:hover {
-  background-color: #002b00;
+  background-color: #142b14;
 }
 .key:hover {
-  background-color: #0000c2;
-}
-
-.key__text {
-  user-select: none;
+  background-color: #6464c2;
 }
 
 .key.special {
-  background-color: #5100bb;
+  background-color: #845cb8;
 }
 .key.special.key_press {
-  background-color: #005800;
+  background-color: #316131;
 }
 .key.special.key_press:hover {
-  background-color: #002b00;
+  background-color: #142b14;
 }
 .key.special:hover {
-  background-color: #390085;
+  background-color: #5f4186;
 }
 
 .key.backspace, .key.capslock, .key.shift-left {
@@ -96,6 +92,14 @@ body {
 
 .key.space {
   width: 330px;
+}
+
+.key__text {
+  user-select: none;
+}
+
+.char .key__text, .letter .key__text {
+  font-weight: bold;
 }
 
 /*# sourceMappingURL=style.css.map */

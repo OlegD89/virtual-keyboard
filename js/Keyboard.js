@@ -72,6 +72,8 @@ export default class Keyboard {
       }
 
       this._fixTwoShiftKeyUpEvent(event);
+      this._altKeyUpAnotherWindow(event);
+      this._ctrlKeyUpAnotherTab(event);
     }
   }
 
@@ -151,6 +153,34 @@ export default class Keyboard {
       if (this._keys.ShiftRight) {
         this._input.pressKey('ShiftRight', false);
         this._keys.ShiftRight = undefined;
+      }
+    }
+  }
+
+  // При переключении между окнами Alt часто снимается не в браузере (Alt+Tab)
+  _altKeyUpAnotherWindow(event) {
+    if (!event.altKey) {
+      if (this._keys.AltLeft) {
+        this._input.pressKey('AltLeft', false);
+        this._keys.AltLeft = undefined;
+      }
+      if (this._keys.AltRight) {
+        this._input.pressKey('AltRight', false);
+        this._keys.AltRight = undefined;
+      }
+    }
+  }
+
+  // При переключении между вкладками Alt часто снимается на другой вкладке (Ctrl+Tab)
+  _ctrlKeyUpAnotherTab(event) {
+    if (!event.ctrlKey) {
+      if (this._keys.ControlLeft) {
+        this._input.pressKey('ControlLeft', false);
+        this._keys.ControlLeft = undefined;
+      }
+      if (this._keys.ControlRight) {
+        this._input.pressKey('ControlRight', false);
+        this._keys.ControlRight = undefined;
       }
     }
   }
