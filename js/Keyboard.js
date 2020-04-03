@@ -1,11 +1,12 @@
 import Layout from './Layout';
+import Input from './Input';
 import { Settings } from './Settings';
-// TODO Реализовать:
-// Можно разнести создание разметки и работу с ней
+
 export default class Keyboard {
   constructor() {
     this._layout = new Layout();
     this._settings = new Settings();
+    this._input = undefined;
     this._keys = {};
     this._keyStickingForMouse = {
       isCapsLock: undefined,
@@ -17,7 +18,8 @@ export default class Keyboard {
   // #region public methods
   init() {
     this._settings.load();
-    this._layout.create(this._settings.getLanguage());
+    const layoutResult = this._layout.create(this._settings.getLanguage());
+    this._input = new Input(layoutResult.input, layoutResult.keys);
   }
 
   run() {
@@ -38,7 +40,7 @@ export default class Keyboard {
           : null;
       if (!elementKey) return;
 
-      const keyCode = that._layout.getKeyCodeByElement(elementKey);
+      const keyCode = that._input.getKeyCodeByElement(elementKey);
       that._keyMouseClickEvent(keyCode);
     });
   }
@@ -49,10 +51,10 @@ export default class Keyboard {
   _keyDownEvent(eventCode, event) {
     if (!this._keys[eventCode]) {
       this._keys[eventCode] = true;
-      this._layout.pressKey(eventCode, true);
+      this._input.pressKey(eventCode, true);
       this._setSettings(event.shiftKey, event.getModifierState('CapsLock'));
     }
-    this._layout.print(eventCode);
+    this._input.print(eventCode);
   }
 
   _keyUpEvent(eventCode, event) {
@@ -60,13 +62,13 @@ export default class Keyboard {
       this._keys[eventCode] = undefined;
       const isCapsLock = event.getModifierState('CapsLock');
       if (eventCode !== 'CapsLock' || !isCapsLock) {
-        this._layout.pressKey(eventCode, false);
+        this._input.pressKey(eventCode, false);
       }
       this._setSettings(event.shiftKey, isCapsLock);
 
       if (this._checkChangeLanguage(eventCode)) {
         const language = this._settings.changeAndGetLanguage();
-        this._layout.changeLanguage(language, event.shiftKey, isCapsLock);
+        this._input.changeLanguage(language, event.shiftKey, isCapsLock);
       }
 
       this._fixTwoShiftKeyUpEvent(event);
@@ -111,10 +113,10 @@ export default class Keyboard {
 
   _setSettings(isShift, isCapsLock) {
     if (this._settings.changeSettingsShift(isShift)) {
-      this._layout.setShift(isShift, isCapsLock);
+      this._input.setShift(isShift, isCapsLock);
     }
     if (this._settings.changeSettingsCaps(isCapsLock)) {
-      this._layout.setCapsLock(isCapsLock, isShift);
+      this._input.setCapsLock(isCapsLock, isShift);
     }
   }
 
@@ -143,11 +145,11 @@ export default class Keyboard {
   _fixTwoShiftKeyUpEvent(event) {
     if (!event.shiftKey) {
       if (this._keys.ShiftLeft) {
-        this._layout.pressKey('ShiftLeft', false);
+        this._input.pressKey('ShiftLeft', false);
         this._keys.ShiftLeft = undefined;
       }
       if (this._keys.ShiftRight) {
-        this._layout.pressKey('ShiftRight', false);
+        this._input.pressKey('ShiftRight', false);
         this._keys.ShiftRight = undefined;
       }
     }

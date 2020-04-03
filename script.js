@@ -86,6 +86,199 @@
 /************************************************************************/
 /******/ ({
 
+/***/ "./js/Input.js":
+/*!*********************!*\
+  !*** ./js/Input.js ***!
+  \*********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Input; });
+/* eslint-disable no-param-reassign */
+class Input {
+  constructor(input, keys) {
+    this._body = document.querySelector('body');
+    this._input = input;
+    this._keys = keys;
+  }
+
+  // #region public methods
+  pressKey(keyCode, isPress) {
+    const keyElement = this._keys[keyCode].element;
+    if (isPress) {
+      keyElement.classList.add('key_press');
+    } else {
+      keyElement.classList.remove('key_press');
+    }
+  }
+
+  print(keyCode) {
+    this._input.focus();
+    const key = this._keys[keyCode];
+    let { selectionStart } = this._input;
+    if (!key.element.classList.contains('special')) {
+      this._input.value = this._setChar(key.text);
+    } else {
+      switch (keyCode) {
+        case 'Backspace':
+          this._input.value = this._getTextBeforePosition().slice(0, -1)
+                        + this._getTextAfterPosition();
+          selectionStart -= 2;
+          break;
+        case 'Tab':
+          this._input.value = this._setChar('\t');
+          break;
+        case 'Enter':
+        case 'NumpadEnter':
+          this._input.value = this._setChar('\n');
+          break;
+        case 'Delete':
+          this._input.value = this._getTextBeforePosition()
+                        + this._getTextAfterPosition().slice(1);
+          selectionStart -= 1;
+          break;
+        case 'ArrowLeft':
+          this._input.selectionStart -= 1;
+          this._input.selectionEnd -= 1;
+          return;
+        case 'ArrowRight':
+          this._input.selectionStart += 1;
+          return;
+        case 'ArrowUp':
+          this._setCurrentPositionUp();
+          return;
+        case 'ArrowDown':
+          this._setCurrentPositionDown();
+          return;
+        default:
+          return;
+      }
+    }
+    selectionStart += 1;
+    this._input.setSelectionRange(selectionStart, selectionStart);
+  }
+
+  setShift(isShift, isCapsLock) {
+    const getProperty = isShift ? this._language.nameShift : this._language.nameUnShift;
+    const keys = this._getKeysArray().filter((o) => o[1][getProperty]);
+    keys.forEach((key) => {
+      const char = key[1][getProperty];
+      const element = key[1].element.firstElementChild;
+      element.textContent = char;
+      key[1].text = char;
+    });
+    this.setCapsLock(isCapsLock, isShift);
+  }
+
+  setCapsLock(isCapsLock, isShift) {
+    const getPropertyChar = this._language.name;
+    const keysChar = this._getKeysArray().filter((o) => o[1][getPropertyChar]);
+    keysChar.forEach((key) => {
+      let char = key[1][getPropertyChar];
+      // eslint-disable-next-line no-bitwise
+      char = isShift ^ isCapsLock ? char.toUpperCase() : char.toLowerCase();
+      const element = key[1].element.firstElementChild;
+      element.textContent = char;
+      key[1].text = char;
+    });
+  }
+
+  changeLanguage(language, isShift, isCapsLock) {
+    this._language = language;
+    this.setShift(isShift, isCapsLock);
+  }
+
+  getKeyCodeByElement(elementKey) {
+    const keyCurrent = this._getKeysArray().find((key) => key[1].element === elementKey);
+    return keyCurrent[0];
+  }
+  // #endregion public methods
+
+  // #region private methods
+  _getKeysArray() {
+    return Object.entries(this._keys);
+  }
+
+  _setCurrentPositionUp() {
+    const text = this._input.value;
+    const rows = text.split('\n');
+    const currentPosition = this._input.selectionStart;
+    const indicesEndRows = Input._getIndicesEndRows(text);
+    const currentRow = Input._getCurrentRowIndex(indicesEndRows, currentPosition);
+
+    let newPosition;
+    if (currentRow === 0) {
+      newPosition = 0;
+    } else {
+      newPosition = currentPosition - rows[currentRow - 1].length - 1; // 1='\n'
+      if (newPosition > indicesEndRows[currentRow - 1]) {
+        newPosition = indicesEndRows[currentRow - 1];
+      }
+    }
+    this._input.setSelectionRange(newPosition, newPosition);
+  }
+
+  _setCurrentPositionDown() {
+    const text = this._input.value;
+    const rows = text.split('\n');
+    const currentPosition = this._input.selectionStart;
+    const indicesEndRows = Input._getIndicesEndRows(text);
+    const currentRow = Input._getCurrentRowIndex(indicesEndRows, currentPosition);
+
+    let newPosition;
+    if (currentRow === indicesEndRows.length - 1) {
+      newPosition = indicesEndRows[indicesEndRows.length - 1];
+    } else {
+      newPosition = currentPosition + rows[currentRow].length + 1; // 1='\n'
+      if (newPosition > indicesEndRows[currentRow + 1]) {
+        newPosition = indicesEndRows[currentRow + 1];
+      }
+    }
+    this._input.setSelectionRange(newPosition, newPosition);
+  }
+
+  static _getIndicesEndRows(text) {
+    const regex = /\n/gi;
+    let result;
+    const indicesEndRows = [];
+    // eslint-disable-next-line no-cond-assign
+    while ((result = regex.exec(text))) {
+      indicesEndRows.push(result.index);
+    }
+    indicesEndRows.push(text.length);
+    return indicesEndRows;
+  }
+
+  static _getCurrentRowIndex(indicesEndRows, currentPosition) {
+    let currentRow;
+    for (let i = 0; i < indicesEndRows.length; i += 1) {
+      if (indicesEndRows[i] >= currentPosition) {
+        currentRow = i;
+        break;
+      }
+    }
+    return currentRow;
+  }
+
+  _setChar(text) {
+    return this._getTextBeforePosition() + text + this._getTextAfterPosition();
+  }
+
+  _getTextBeforePosition() {
+    return this._input.value.slice(0, this._input.selectionStart);
+  }
+
+  _getTextAfterPosition() {
+    return this._input.value.slice(this._input.selectionStart);
+  }
+  // #endregion private methods
+}
+
+
+/***/ }),
+
 /***/ "./js/Keyboard.js":
 /*!************************!*\
   !*** ./js/Keyboard.js ***!
@@ -97,15 +290,17 @@
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Keyboard; });
 /* harmony import */ var _Layout__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Layout */ "./js/Layout.js");
-/* harmony import */ var _Settings__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Settings */ "./js/Settings.js");
+/* harmony import */ var _Input__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Input */ "./js/Input.js");
+/* harmony import */ var _Settings__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Settings */ "./js/Settings.js");
 
 
-// TODO Реализовать:
-// Можно разнести создание разметки и работу с ней
+
+
 class Keyboard {
   constructor() {
     this._layout = new _Layout__WEBPACK_IMPORTED_MODULE_0__["default"]();
-    this._settings = new _Settings__WEBPACK_IMPORTED_MODULE_1__["Settings"]();
+    this._settings = new _Settings__WEBPACK_IMPORTED_MODULE_2__["Settings"]();
+    this._input = undefined;
     this._keys = {};
     this._keyStickingForMouse = {
       isCapsLock: undefined,
@@ -117,7 +312,8 @@ class Keyboard {
   // #region public methods
   init() {
     this._settings.load();
-    this._layout.create(this._settings.getLanguage());
+    const layoutResult = this._layout.create(this._settings.getLanguage());
+    this._input = new _Input__WEBPACK_IMPORTED_MODULE_1__["default"](layoutResult.input, layoutResult.keys);
   }
 
   run() {
@@ -138,7 +334,7 @@ class Keyboard {
           : null;
       if (!elementKey) return;
 
-      const keyCode = that._layout.getKeyCodeByElement(elementKey);
+      const keyCode = that._input.getKeyCodeByElement(elementKey);
       that._keyMouseClickEvent(keyCode);
     });
   }
@@ -149,10 +345,10 @@ class Keyboard {
   _keyDownEvent(eventCode, event) {
     if (!this._keys[eventCode]) {
       this._keys[eventCode] = true;
-      this._layout.pressKey(eventCode, true);
+      this._input.pressKey(eventCode, true);
       this._setSettings(event.shiftKey, event.getModifierState('CapsLock'));
     }
-    this._layout.print(eventCode);
+    this._input.print(eventCode);
   }
 
   _keyUpEvent(eventCode, event) {
@@ -160,13 +356,13 @@ class Keyboard {
       this._keys[eventCode] = undefined;
       const isCapsLock = event.getModifierState('CapsLock');
       if (eventCode !== 'CapsLock' || !isCapsLock) {
-        this._layout.pressKey(eventCode, false);
+        this._input.pressKey(eventCode, false);
       }
       this._setSettings(event.shiftKey, isCapsLock);
 
       if (this._checkChangeLanguage(eventCode)) {
         const language = this._settings.changeAndGetLanguage();
-        this._layout.changeLanguage(language, event.shiftKey, isCapsLock);
+        this._input.changeLanguage(language, event.shiftKey, isCapsLock);
       }
 
       this._fixTwoShiftKeyUpEvent(event);
@@ -211,10 +407,10 @@ class Keyboard {
 
   _setSettings(isShift, isCapsLock) {
     if (this._settings.changeSettingsShift(isShift)) {
-      this._layout.setShift(isShift, isCapsLock);
+      this._input.setShift(isShift, isCapsLock);
     }
     if (this._settings.changeSettingsCaps(isCapsLock)) {
-      this._layout.setCapsLock(isCapsLock, isShift);
+      this._input.setCapsLock(isCapsLock, isShift);
     }
   }
 
@@ -243,11 +439,11 @@ class Keyboard {
   _fixTwoShiftKeyUpEvent(event) {
     if (!event.shiftKey) {
       if (this._keys.ShiftLeft) {
-        this._layout.pressKey('ShiftLeft', false);
+        this._input.pressKey('ShiftLeft', false);
         this._keys.ShiftLeft = undefined;
       }
       if (this._keys.ShiftRight) {
-        this._layout.pressKey('ShiftRight', false);
+        this._input.pressKey('ShiftRight', false);
         this._keys.ShiftRight = undefined;
       }
     }
@@ -620,13 +816,11 @@ const keysDictionary = {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Layout; });
 /* harmony import */ var _Keys__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Keys */ "./js/Keys.js");
-/* eslint-disable no-param-reassign */
 
 
 class Layout {
   constructor() {
     this._body = document.querySelector('body');
-    this._input = undefined;
     this._keys = {};
   }
 
@@ -635,99 +829,12 @@ class Layout {
     this._language = language;
     const wrapper = Layout._createWrapper();
     this._body.appendChild(wrapper);
-    this._input = Layout._createInput();
-    wrapper.appendChild(this._input);
+    const input = Layout._createInput();
+    wrapper.appendChild(input);
     wrapper.appendChild(this._createKeyboard());
     wrapper.appendChild(Layout._createDescription());
-  }
 
-  pressKey(keyCode, isPress) {
-    const keyElement = this._keys[keyCode].element;
-    if (isPress) {
-      keyElement.classList.add('key_press');
-    } else {
-      keyElement.classList.remove('key_press');
-    }
-  }
-
-  print(keyCode) {
-    this._input.focus();
-    const key = this._keys[keyCode];
-    let { selectionStart } = this._input;
-    if (!key.element.classList.contains('special')) {
-      this._input.value = this._setChar(key.text);
-    } else {
-      switch (keyCode) {
-        case 'Backspace':
-          this._input.value = this._getTextBeforePosition().slice(0, -1)
-                        + this._getTextAfterPosition();
-          selectionStart -= 2;
-          break;
-        case 'Tab':
-          this._input.value = this._setChar('\t');
-          break;
-        case 'Enter':
-        case 'NumpadEnter':
-          this._input.value = this._setChar('\n');
-          break;
-        case 'Delete':
-          this._input.value = this._getTextBeforePosition()
-                        + this._getTextAfterPosition().slice(1);
-          break;
-        case 'ArrowLeft':
-          this._input.selectionStart -= 1;
-          this._input.selectionEnd -= 1;
-          return;
-        case 'ArrowRight':
-          this._input.selectionStart += 1;
-          return;
-        case 'ArrowUp':
-          this._setCurrentPositionUp();
-          return;
-        case 'ArrowDown':
-          this._setCurrentPositionDown();
-          return;
-        default:
-          return;
-      }
-    }
-    selectionStart += 1;
-    this._input.setSelectionRange(selectionStart, selectionStart);
-  }
-
-  setShift(isShift, isCapsLock) {
-    const getProperty = isShift ? this._language.nameShift : this._language.nameUnShift;
-    const keys = this._getKeysArray().filter((o) => o[1][getProperty]);
-    keys.forEach((key) => {
-      const char = key[1][getProperty];
-      const element = key[1].element.firstElementChild;
-      element.textContent = char;
-      key[1].text = char;
-    });
-    this.setCapsLock(isCapsLock, isShift);
-  }
-
-  setCapsLock(isCapsLock, isShift) {
-    const getPropertyChar = this._language.name;
-    const keysChar = this._getKeysArray().filter((o) => o[1][getPropertyChar]);
-    keysChar.forEach((key) => {
-      let char = key[1][getPropertyChar];
-      // eslint-disable-next-line no-bitwise
-      char = isShift ^ isCapsLock ? char.toUpperCase() : char.toLowerCase();
-      const element = key[1].element.firstElementChild;
-      element.textContent = char;
-      key[1].text = char;
-    });
-  }
-
-  changeLanguage(language, isShift, isCapsLock) {
-    this._language = language;
-    this.setShift(isShift, isCapsLock);
-  }
-
-  getKeyCodeByElement(elementKey) {
-    const keyCurrent = this._getKeysArray().find((key) => key[1].element === elementKey);
-    return keyCurrent[0];
+    return { input, keys: this._keys };
   }
   // #endregion public methods
 
@@ -829,6 +936,7 @@ class Layout {
       additionalClasses.forEach((addClass) => keyDiv.classList.add(addClass));
     }
     keyDiv.appendChild(Layout._createKeyText(key.text));
+    // eslint-disable-next-line no-param-reassign
     key.element = keyDiv;
     this._keys[key.keyCode] = key;
     return keyDiv;
@@ -868,7 +976,6 @@ class Layout {
     return descriptionSpan;
   }
 
-  // #region keys
   _getKey(text) {
     const key = _Keys__WEBPACK_IMPORTED_MODULE_0__["keysDictionary"][text] ? _Keys__WEBPACK_IMPORTED_MODULE_0__["keysDictionary"][text] : {};
     key.text = key[this._language.nameUnShift] || key[this._language.name] || text;
@@ -880,87 +987,7 @@ class Layout {
     key.text = key[this._language.nameUnShift] || key[this._language.name] || text;
     return key;
   }
-
-  _getKeysArray() {
-    return Object.entries(this._keys);
-  }
-  // #endregion keys
-
-  // #region print
-  _setCurrentPositionUp() {
-    const text = this._input.value;
-    const rows = text.split('\n');
-    const currentPosition = this._input.selectionStart;
-    const indicesEndRows = Layout._getIndicesEndRows(text);
-    const currentRow = Layout._getCurrentRowIndex(indicesEndRows, currentPosition);
-
-    let newPosition;
-    if (currentRow === 0) {
-      newPosition = 0;
-    } else {
-      newPosition = currentPosition - rows[currentRow - 1].length - 1; // 1='\n'
-      if (newPosition > indicesEndRows[currentRow - 1]) {
-        newPosition = indicesEndRows[currentRow - 1];
-      }
-    }
-    this._input.setSelectionRange(newPosition, newPosition);
-  }
-
-  _setCurrentPositionDown() {
-    const text = this._input.value;
-    const rows = text.split('\n');
-    const currentPosition = this._input.selectionStart;
-    const indicesEndRows = Layout._getIndicesEndRows(text);
-    const currentRow = Layout._getCurrentRowIndex(indicesEndRows, currentPosition);
-
-    let newPosition;
-    if (currentRow === indicesEndRows.length - 1) {
-      newPosition = indicesEndRows[indicesEndRows.length - 1];
-    } else {
-      newPosition = currentPosition + rows[currentRow].length + 1; // 1='\n'
-      if (newPosition > indicesEndRows[currentRow + 1]) {
-        newPosition = indicesEndRows[currentRow + 1];
-      }
-    }
-    this._input.setSelectionRange(newPosition, newPosition);
-  }
-
-  static _getIndicesEndRows(text) {
-    const regex = /\n/gi;
-    let result;
-    const indicesEndRows = [];
-    // eslint-disable-next-line no-cond-assign
-    while ((result = regex.exec(text))) {
-      indicesEndRows.push(result.index);
-    }
-    indicesEndRows.push(text.length);
-    return indicesEndRows;
-  }
-
-  static _getCurrentRowIndex(indicesEndRows, currentPosition) {
-    let currentRow;
-    for (let i = 0; i < indicesEndRows.length; i += 1) {
-      if (indicesEndRows[i] >= currentPosition) {
-        currentRow = i;
-        break;
-      }
-    }
-    return currentRow;
-  }
-
-  _setChar(text) {
-    return this._getTextBeforePosition() + text + this._getTextAfterPosition();
-  }
-
-  _getTextBeforePosition() {
-    return this._input.value.slice(0, this._input.selectionStart);
-  }
-
-  _getTextAfterPosition() {
-    return this._input.value.slice(this._input.selectionStart);
-  }
-  // #endregion print
-  // #endregion private methods
+  // #private methods
 }
 
 
